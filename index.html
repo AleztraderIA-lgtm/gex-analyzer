@@ -241,6 +241,19 @@ h1 em{color:var(--cyan);font-style:normal}
   </div>
 </header>
  
+<!-- API KEY BANNER -->
+<div id="apiBanner" style="background:rgba(255,140,0,.1);border:1px solid rgba(255,140,0,.4);border-radius:8px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+  <div style="flex:1;min-width:200px">
+    <div style="font-family:'Orbitron',monospace;font-size:9px;font-weight:700;letter-spacing:3px;color:#ff8c00;margin-bottom:5px">🔑 ANTHROPIC API KEY REQUERIDA</div>
+    <div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:#b8d5f0">Obtén tu clave gratis en <a href="https://console.anthropic.com" target="_blank" style="color:#00aaff">console.anthropic.com</a> → API Keys</div>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center;flex:2;min-width:260px">
+    <input id="apiKeyInput" type="password" placeholder="sk-ant-api03-..." style="flex:1;background:rgba(0,0,0,.3);border:1px solid rgba(255,140,0,.4);border-radius:5px;padding:9px 12px;color:#fff;font-family:'Share Tech Mono',monospace;font-size:12px;outline:none"/>
+    <button onclick="saveApiKey()" style="background:linear-gradient(135deg,#cc5500,#ff8c00);border:none;border-radius:5px;padding:9px 16px;color:#fff;font-family:'Orbitron',monospace;font-size:10px;font-weight:700;letter-spacing:2px;cursor:pointer;white-space:nowrap">GUARDAR</button>
+  </div>
+  <div id="keyStatus" style="font-family:'Share Tech Mono',monospace;font-size:11px;display:none"></div>
+</div>
+ 
 <div class="ticker-bar">
   <div class="ticker">
     <span class="ti">NET GEX VOL <span class="d">◀ NEGATIVO</span></span>
@@ -479,6 +492,36 @@ h1 em{color:var(--cyan);font-style:normal}
 </div><!-- /wrap -->
  
 <script>
+// ── API Key ──
+function saveApiKey(){
+  const k=document.getElementById('apiKeyInput').value.trim();
+  if(!k.startsWith('sk-ant')){
+    document.getElementById('keyStatus').textContent='⚠ Clave inválida — debe empezar con sk-ant...';
+    document.getElementById('keyStatus').style.color='#ff2d55';
+    document.getElementById('keyStatus').style.display='block';
+    return;
+  }
+  localStorage.setItem('anthropic_key',k);
+  document.getElementById('keyStatus').textContent='✅ API Key guardada';
+  document.getElementById('keyStatus').style.color='#00ff88';
+  document.getElementById('keyStatus').style.display='block';
+  document.getElementById('apiBanner').style.borderColor='rgba(0,255,136,.3)';
+  document.getElementById('apiBanner').style.background='rgba(0,255,136,.05)';
+}
+function getApiKey(){return localStorage.getItem('anthropic_key')||''}
+// Load saved key on start
+window.addEventListener('load',()=>{
+  const k=getApiKey();
+  if(k){
+    document.getElementById('apiKeyInput').value=k;
+    document.getElementById('keyStatus').textContent='✅ API Key cargada';
+    document.getElementById('keyStatus').style.color='#00ff88';
+    document.getElementById('keyStatus').style.display='block';
+    document.getElementById('apiBanner').style.borderColor='rgba(0,255,136,.3)';
+    document.getElementById('apiBanner').style.background='rgba(0,255,136,.05)';
+  }
+});
+ 
 // ── Clock ──
 function tick(){
   const n=new Date();
@@ -615,9 +658,11 @@ Extrae TODOS los valores visibles: Zero Gamma, Major Positive GEX, Major Negativ
 Aplica la lógica GEX Analyzer v4 y emite el veredicto completo en el JSON especificado.`;
  
   try{
+    const apiKey=getApiKey();
+    if(!apiKey){showErr('errS','⚠ Ingresa tu Anthropic API Key arriba primero.');hideLoad();document.getElementById('btnS').disabled=false;return}
     const res=await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',
-      headers:{'Content-Type':'application/json'},
+      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
       body:JSON.stringify({
         model:'claude-sonnet-4-20250514',
         max_tokens:1000,
@@ -672,9 +717,11 @@ ${JSON.stringify(vals,null,2)}
 Aplica la lógica exacta del GEX Analyzer v4 y emite el veredicto completo. Los datos 'extracted' ya los tienes en los valores proporcionados arriba.`;
  
   try{
+    const apiKey=getApiKey();
+    if(!apiKey){showErr('errM','⚠ Ingresa tu Anthropic API Key arriba primero.');hideLoad();document.getElementById('btnM').disabled=false;return}
     const res=await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',
-      headers:{'Content-Type':'application/json'},
+      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
       body:JSON.stringify({
         model:'claude-sonnet-4-20250514',
         max_tokens:1000,
